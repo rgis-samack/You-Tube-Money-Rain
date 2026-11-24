@@ -49,6 +49,10 @@ def carregar_config():
             for k, v in DEFAULT_CONFIG.items():
                 if k not in cfg:
                     cfg[k] = v
+            # Se o diretorio salvo estiver vazio ou nao existir no computador atual, usa a pasta local padrao
+            caminho_dir = cfg.get("download_dir", "")
+            if not caminho_dir or not Path(caminho_dir).exists():
+                cfg["download_dir"] = DIR_DOWNLOAD_DEFAULT
             return cfg
     except Exception as e:
         print(f"[CONFIG] Erro ao ler config.json: {e}")
