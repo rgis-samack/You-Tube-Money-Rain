@@ -1,0 +1,11 @@
+{
+  "download_dir": "C:\\DEV\\Linux\\streamlink\\gravacoes",
+  "twitch_client_id": "kimne78kx3ncx6brgo4mv6wki5h1ko",
+  "twitch_auth_token": "",
+  "kick_auth_token": "",
+  "bypass_18_plus": true,
+  "port": 8765,
+  "host": "127.0.0.1",
+  "max_concurrent_downloads": 3,
+  "auto_open_folder_after_download": false
+}

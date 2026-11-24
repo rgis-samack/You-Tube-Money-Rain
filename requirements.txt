@@ -1,0 +1,31 @@
+# ====================================================================
+# DEPENDÊNCIAS DO CORTES IA PRO & MONITORAMENTO LIVE
+# ====================================================================
+
+# Servidor Web & API
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+httpx>=0.27.0
+requests>=2.31.0
+pydantic>=2.6.0
+jinja2>=3.1.0
+
+# Inteligência Artificial & Transcrição Vocal
+faster-whisper>=1.0.0
+ctranslate2>=4.0.0
+tokenizers>=0.19.0
+huggingface-hub>=0.23.0
+
+# Visão Computacional & Processamento de Imagem
+opencv-python>=4.9.0.80
+numpy>=1.26.0,<3.0.0
+pillow>=10.2.0
+
+# Interface Gráfica Desktop
+customtkinter>=5.2.0
+tkinterdnd2>=0.3.0
+darkdetect>=0.8.0
+
+# Download de Vídeos & Monitoramento de Streams
+yt-dlp>=2024.03.0
+streamlink>=6.5.0

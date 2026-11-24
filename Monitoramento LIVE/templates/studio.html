@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cortes IA Pro 2.0 — Studio de Crop & Enquadramento Interativo</title>
+  <link rel="stylesheet" href="/static/css/fluent-twitch.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-studio: #0d1117;
+      --panel-bg: rgba(22, 27, 34, 0.85);
+      --border-subtle: rgba(255, 255, 255, 0.12);
+      --cam-color: #ff9800;
+      --display-color: #a855f7;
+      --accent-cyan: #00d4ff;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      max-width: 100vw;
+      background: var(--bg-studio);
+      color: #f0f6fc;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+      box-sizing: border-box;
+    }
+
+    /* Top Navigation Bar */
+    .studio-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(13, 17, 23, 0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      max-width: 100vw;
+      box-sizing: border-box;
+      gap: 12px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #a855f7, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .nav-tab-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      color: #8b949e;
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .nav-tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-tab-btn.active {
+      color: #fff;
+      background: #7928ca;
+      box-shadow: 0 2px 10px rgba(121, 40, 202, 0.4);
+    }
+
+    /* Workspace Grid */
+    .studio-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 16px;
+      padding: 12px 18px;
+      width: 100%;
+      max-width: 100vw;
+      margin: 0;
+      box-sizing: border-box;
+      min-height: calc(100vh - 65px);
+      overflow-x: hidden;
+    }
+
+    @media (max-width: 1100px) {
+      .studio-workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Panel (Interactive 16:9 Canvas) */
+    .canvas-panel {
+      background: var(--panel-bg);
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .panel-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .video-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1 1 320px;
+      min-width: 240px;
+    }
+
+    .video-dropdown {
+      flex: 1 1 auto;
+      min-width: 160px;
+      background: #0d1117;
+      color: #c9d1d9;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 0.85rem;
+      outline: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-dropdown:focus {
+      border-color: #a855f7;
+    }
+
+    .header-tools-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f0f6fc;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap !important;
+      flex-shrink: 0 !important;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7928ca, #a855f7);
+      border: none;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #6b21a8, #9333ea);
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+    }
+
+    /* 16:9 Canvas Container */
+    .canvas-viewport-wrapper {
+      position: relative;
+      width: 100%;
+      max-height: calc(100vh - 270px);
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      touch-action: none;
+      box-sizing: border-box;
+    }
+
+    #sourceImage {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      display: block;
+    }
+
+    .crop-overlay-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Interactive Bounding Boxes */
+    .crop-box {
+      position: absolute;
+      pointer-events: auto;
+      cursor: move;
+      box-sizing: border-box;
+      border-radius: 4px;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .crop-box.cam-box {
+      border: 2px solid var(--cam-color);
+      background: rgba(255, 152, 0, 0.12);
+      box-shadow: 0 0 12px rgba(255, 152, 0, 0.35);
+      z-index: 20;
+    }
+
+    .crop-box.display-box {
+      border: 2px solid var(--display-color);
+      background: rgba(168, 85, 247, 0.10);
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.30);
+      z-index: 10;
+    }
+
+    .crop-box:hover {
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
+    }
+
+    .box-badge {
+      position: absolute;
+      top: -24px;
+      left: -2px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      pointer-events: none;
+      text-transform: uppercase;
+    }
+
+    .cam-box .box-badge {
+      background: var(--cam-color);
+      box-shadow: 0 2px 6px rgba(255, 152, 0, 0.4);
+    }
+
+    .display-box .box-badge {
+      background: var(--display-color);
+      box-shadow: 0 2px 6px rgba(168, 85, 247, 0.4);
+    }
+
+    /* Resize Handles */
+    .resize-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+      pointer-events: auto;
+      transition: transform 0.15s ease;
+    }
+
+    .resize-handle:hover {
+      transform: scale(1.4);
+    }
+
+    .handle-tl { top: -6px; left: -6px; cursor: nwse-resize; }
+    .handle-tr { top: -6px; right: -6px; cursor: nesw-resize; }
+    .handle-bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    .handle-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+    .center-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 28px;
+      height: 28px;
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Timeline Snapshots Bar */
+    .snapshots-strip-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #0d1117;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .strip-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: #8b949e;
+    }
+
+    .snapshots-scroll {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .snapshots-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    .snapshots-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .snapshot-thumb {
+      position: relative;
+      width: 110px;
+      height: 62px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      background: #161b22;
+    }
+
+    .snapshot-thumb:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .snapshot-thumb.active {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+    }
+
+    .snapshot-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb-time {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* Right Panel (9:16 Smartphone Preview) */
+    .preview-panel {
+      background: var(--panel-bg);
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      box-sizing: border-box;
+      height: calc(100vh - 85px);
+      max-height: calc(100vh - 85px);
+      position: sticky;
+      top: 70px;
+      overflow: hidden;
+    }
+
+    .preview-scroll-content {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .preview-scroll-content::-webkit-scrollbar {
+      width: 5px;
+    }
+    .preview-scroll-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .preview-footer-actions {
+      flex-shrink: 0;
+      padding-top: 10px;
+      margin-top: 4px;
+      border-top: 1px solid var(--border-subtle);
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .phone-container {
+      position: relative;
+      height: clamp(280px, 35vh, 440px);
+      aspect-ratio: 9 / 16;
+      width: auto;
+      max-width: 250px;
+      margin: 0 auto;
+      background: #000;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 3px solid #30363d;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 12px;
+      background: #161b22;
+      border-radius: 10px;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .phone-cam-part {
+      width: 100%;
+      height: 38%;
+      position: relative;
+      overflow: hidden;
+      background: #050505;
+    }
+
+    .phone-display-part {
+      width: 100%;
+      height: 62%;
+      position: relative;
+      overflow: hidden;
+      background: #0a0a0c;
+    }
+
+    .preview-feed-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Horizontal Split Divider Handle */
+    .split-divider-bar {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      transform: translateY(-6px);
+      z-index: 40;
+      cursor: row-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      touch-action: none;
+    }
+
+    .split-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, #a855f7, #00d4ff, #ff9800);
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.8);
+    }
+
+    .split-pill-handle {
+      position: relative;
+      background: #1f242c;
+      color: #f0f6fc;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 1px 10px;
+      border-radius: 12px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+      pointer-events: auto;
+    }
+
+    /* Captions & Overlay in Phone */
+    .phone-captions-overlay {
+      position: absolute;
+      bottom: 40px;
+      left: 10px;
+      right: 10px;
+      text-align: center;
+      z-index: 35;
+      pointer-events: none;
+    }
+
+    .mrbeast-caption {
+      display: inline-block;
+      font-family: 'Impact', 'Arial Black', sans-serif;
+      font-size: 1.15rem;
+      color: #ffeb3b;
+      text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 4px 8px rgba(0,0,0,0.9);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1.15;
+    }
+
+    .hook-badge-banner {
+      position: absolute;
+      top: 24px;
+      left: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.75);
+      border-left: 3px solid #ff9800;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #fff;
+      z-index: 35;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Preset & Controls Box */
+    .controls-grid {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .split-readout {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: #8b949e;
+      font-weight: 600;
+    }
+
+    .preset-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip-btn {
+      background: rgba(255, 255, 255, 0.05);
+      color: #c9d1d9;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .chip-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    .chip-btn.active {
+      background: #7928ca;
+      color: #fff;
+      border-color: #a855f7;
+    }
+
+    /* Render Options Bar */
+    .render-config-card {
+      background: #0d1117;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      font-size: 0.8rem;
+    }
+
+    .cfg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cfg-group label {
+      color: #8b949e;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .cfg-select {
+      background: #161b22;
+      color: #f0f6fc;
+      border: 1px solid var(--border-subtle);
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    /* Render Execution Button */
+    .btn-render-viral {
+      width: 100%;
+      min-height: 44px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 0.90rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.6), 0 4px 14px rgba(16, 185, 129, 0.35);
+      transition: all 0.2s;
+      position: sticky;
+      bottom: 0;
+      z-index: 50;
+      white-space: nowrap;
+      margin-top: 4px;
+    }
+
+    .btn-render-viral:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* Modal / Progress overlay */
+    .progress-banner {
+      display: none;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.82rem;
+      color: #a7f3d0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="studio-header">
+    <div class="brand-section">
+      <div class="brand-logo">
+        <span>✂️</span>
+        <span>CORTES IA PRO 2.0</span>
+      </div>
+      <div class="nav-tabs">
+        <a href="/" class="nav-tab-btn">
+          <span>📡</span>
+          <span>Monitoramento LIVE</span>
+        </a>
+        <a href="/studio" class="nav-tab-btn active">
+          <span>📐</span>
+          <span>Studio de Crop & Enquadramento</span>
+        </a>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span id="gpuStatusBadge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(52, 211, 153, 0.4);">
+        ⚡ GPU AMD AMF (Radeon RX 7600)
+      </span>
+      <button class="btn-action" onclick="abrirConfiguracoes()">⚙️ Configurações</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="studio-workspace">
+
+    <!-- Left: 16:9 Interactive Crop Canvas -->
+    <section class="canvas-panel">
+      
+      <!-- Video Selector & Header Info -->
+      <div class="panel-header-bar">
+        <div class="video-selector-wrap">
+          <select id="videoDropdown" class="video-dropdown" onchange="selecionarVideoDoDropdown()">
+            <option value="">Carregando vídeos recentes...</option>
+          </select>
+        </div>
+
+        <div class="header-tools-group">
+          <button class="btn-action" onclick="abrirDialogoArquivo()">
+            <span>📂</span>
+            <span>Outro Arquivo...</span>
+          </button>
+          <button class="btn-action" onclick="resetarCaixasAuto()" title="Rastrear Webcam com IA Facial YuNet">
+            <span>↺</span>
+            <span>Auto YuNet</span>
+          </button>
+          <button class="btn-action" id="lockAspectBtn" onclick="alternarTravaProporcao()">
+            <span>🔓</span>
+            <span>Livre</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 16:9 Interactive Canvas Viewport -->
+      <div class="canvas-viewport-wrapper" id="viewportWrap">
+        <img id="sourceImage" alt="Snapshot do Vídeo" src="">
+
+        <div class="crop-overlay-layer" id="overlayLayer">
+          
+          <!-- CAM Bounding Box (Orange) -->
+          <div class="crop-box cam-box" id="camBox">
+            <div class="box-badge">📷 WEBCAM</div>
+            <div class="center-crosshair">✥</div>
+            <div class="resize-handle handle-tl" data-handle="tl"></div>
+            <div class="resize-handle handle-tr" data-handle="tr"></div>
+            <div class="resize-handle handle-bl" data-handle="bl"></div>
+            <div class="resize-handle handle-br" data-handle="br"></div>
+          </div>
+
+          <!-- DISPLAY Bounding Box (Purple) -->
+          <div class="crop-box display-box" id="displayBox">
+            <div class="box-badge">🎮 JOGO / DISPLAY</div>
+            <div class="center-crosshair">✥</div>
+            <div class="resize-handle handle-tl" data-handle="tl"></div>
+            <div class="resize-handle handle-tr" data-handle="tr"></div>
+            <div class="resize-handle handle-bl" data-handle="bl"></div>
+            <div class="resize-handle handle-br" data-handle="br"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Live Coordinates Indicator -->
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #8b949e; padding: 0 4px;">
+        <span id="camCoords">CAM: 480x270 @ (10, 64)</span>
+        <span id="displayCoords">DISPLAY: 1500x1080 @ (200, 0)</span>
+      </div>
+
+      <!-- Snapshots Timeline Scrubber -->
+      <div class="snapshots-strip-container">
+        <div class="strip-header">
+          <span>📸 PREVIEWS DOS MOMENTOS (Navegue para conferir se a câmera ou jogo saem da área)</span>
+          <span id="videoDurationLabel">Duração: 00:00</span>
+        </div>
+        <div class="snapshots-scroll" id="snapshotsList">
+          <!-- Snapshots injetados via JS -->
+        </div>
+      </div>
+
+      <!-- Aspect Ratio Preset Bar -->
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-action active" style="border-color: #a855f7;">📱 9:16 Vertical (Shorts/Reels/TikTok)</button>
+          <button class="btn-action" disabled style="opacity: 0.5;">🖥️ 16:9 Paisagem</button>
+          <button class="btn-action" disabled style="opacity: 0.5;">📐 4:5 Retrato</button>
+        </div>
+
+        <span style="font-size: 0.78rem; color: #8b949e;">
+          Renderização direta via <strong>AMD Radeon RX 7600 (GPU AMF)</strong>
+        </span>
+      </div>
+
+    </section>
+
+    <!-- Right: 9:16 Vertical Live Preview & Render -->
+    <aside class="preview-panel">
+      
+      <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;">
+        <span style="font-weight: 700; font-size: 0.95rem; color: #f0f6fc;">📱 Preview 9:16 em Tempo Real</span>
+        <span style="font-size: 0.75rem; color: #34d399; font-weight: 600;">Ao Vivo</span>
+      </div>
+
+      <!-- Scrollable Preview & Settings Body -->
+      <div class="preview-scroll-content">
+        <!-- Smartphone Frame (Preview 100% Limpo Sem Obstruções) -->
+        <div class="phone-container" id="phoneContainer">
+          <div class="phone-notch"></div>
+
+          <!-- Top Section: Cropped CAM -->
+          <div class="phone-cam-part" id="phoneCamPart">
+            <canvas id="camCanvas" class="preview-feed-canvas"></canvas>
+          </div>
+
+          <!-- Draggable Split Divider Line & Pill Handle -->
+          <div class="split-divider-bar" id="splitDivider">
+            <div class="split-line"></div>
+            <div class="split-pill-handle">••••</div>
+          </div>
+
+          <!-- Bottom Section: Cropped DISPLAY -->
+          <div class="phone-display-part" id="phoneDisplayPart">
+            <canvas id="displayCanvas" class="preview-feed-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Split Ratio & Presets -->
+        <div class="controls-grid">
+          <div class="split-readout">
+            <span id="camSplitPct">📷 Webcam: 38%</span>
+            <span id="displaySplitPct">🎮 Jogo: 62%</span>
+          </div>
+
+          <div class="preset-chips">
+            <button class="chip-btn active" onclick="aplicarPresetSplit(0.38)">🔥 Padrão Viral (38/62)</button>
+            <button class="chip-btn" onclick="aplicarPresetSplit(0.48)">👤 Câmera Maior (48/52)</button>
+            <button class="chip-btn" onclick="aplicarPresetSplit(0.26)">🎮 Foco no Jogo (26/74)</button>
+          </div>
+
+          <!-- Render Settings Options -->
+          <div class="render-config-card">
+            <div class="cfg-group">
+              <label>Cortes</label>
+              <select id="cfgQtdCortes" class="cfg-select">
+                <option value="10">10 Cortes (Padrão)</option>
+                <option value="5">5 Cortes</option>
+                <option value="15">15 Cortes</option>
+                <option value="20">20 Cortes</option>
+                <option value="25">25 Cortes</option>
+                <option value="30">30 Cortes</option>
+                <option value="por_hora">10 por Hora</option>
+              </select>
+            </div>
+
+            <div class="cfg-group">
+              <label>Duração</label>
+              <select id="cfgDurCorte" class="cfg-select">
+                <option value="40">40s (Padrão)</option>
+                <option value="30">30s (Rápido)</option>
+                <option value="60">60s (Completo)</option>
+              </select>
+            </div>
+
+            <div class="cfg-group">
+              <label>Resolução</label>
+              <select id="cfgTargetRes" class="cfg-select">
+                <option value="2K">2K Vertical (AMF)</option>
+                <option value="1080p">1080p Vertical</option>
+              </select>
+            </div>
+
+            <div class="cfg-group">
+              <label>Whisper IA</label>
+              <select id="cfgWhisperModel" class="cfg-select" title="Silero VAD + Filtro Vocal Ativos">
+                <option value="medium" selected>Medium (Alta Fidelidade)</option>
+                <option value="small">Small (Rápido)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; font-size: 0.75rem; color: #c9d1d9;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="chkLegendas" checked>
+              <span>Legendas MrBeast (Whisper)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" id="chkDucking">
+              <span>Audio Ducking</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pinned Bottom Render Action Bar (Always Visible) -->
+      <div class="preview-footer-actions">
+        <button class="btn-render-viral" id="btnIniciarRender" onclick="dispararRenderStudio()">
+          <span>🚀 RENDERIZAR CORTES COM ESTE CROP (GPU AMF)</span>
+        </button>
+
+        <div class="progress-banner" id="progressBanner">
+          <div id="progressText">Iniciando renderização acelerada...</div>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <script>
+    // --- ESTADO GLOBAL DO STUDIO ---
+    const state = {
+      videoPath: "",
+      videoNome: "",
+      larguraOrig: 1920,
+      alturaOrig: 1080,
+      duracao: 0,
+      snapshots: [],
+      currentSnapshotIndex: 0,
+      currentSnapshotImg: null,
+      
+      // Coordenadas das caixas em pixels originais do vídeo
+      cam: { x: 50, y: 50, w: 480, h: 270 },
+      display: { x: 0, y: 0, w: 1920, h: 1080 },
+      splitRatio: 0.38, // 38% cam no topo, 62% display na base
+
+      lockAspect: false,
+      isDraggingBox: null,
+      isResizingBox: null,
+      resizeHandle: null,
+      dragStart: { x: 0, y: 0 },
+      boxStart: { x: 0, y: 0, w: 0, h: 0 },
+
+      isDraggingSplit: false
+    };
+
+    // Elementos DOM
+    const viewportWrap = document.getElementById("viewportWrap");
+    const sourceImage = document.getElementById("sourceImage");
+    const camBox = document.getElementById("camBox");
+    const displayBox = document.getElementById("displayBox");
+    const snapshotsList = document.getElementById("snapshotsList");
+
+    const phoneCamPart = document.getElementById("phoneCamPart");
+    const phoneDisplayPart = document.getElementById("phoneDisplayPart");
+    const splitDivider = document.getElementById("splitDivider");
+    const camCanvas = document.getElementById("camCanvas");
+    const displayCanvas = document.getElementById("displayCanvas");
+
+    const camCoords = document.getElementById("camCoords");
+    const displayCoords = document.getElementById("displayCoords");
+    const camSplitPct = document.getElementById("camSplitPct");
+    const displaySplitPct = document.getElementById("displaySplitPct");
+
+    // --- INICIALIZAÇÃO ---
+    window.addEventListener("DOMContentLoaded", async () => {
+      await carregarListaVideos();
+
+      // Checa se veio vídeo via parâmetro de URL (?video=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const videoParam = urlParams.get("video");
+      if (videoParam) {
+        carregarSnapshotsDoVideo(videoParam);
+      } else {
+        // Carrega o primeiro vídeo da lista por padrão
+        const dropdown = document.getElementById("videoDropdown");
+        if (dropdown && dropdown.options.length > 1) {
+          dropdown.selectedIndex = 1;
+          selecionarVideoDoDropdown();
+        }
+      }
+
+      configurarInteracaoCanvas();
+      configurarInteracaoSplitDivider();
+    });
+
+    async function carregarListaVideos() {
+      try {
+        const resp = await fetch("/api/studio/videos");
+        const data = await resp.json();
+        const dropdown = document.getElementById("videoDropdown");
+        dropdown.innerHTML = "";
+
+        if (data.videos && data.videos.length > 0) {
+          const optPrompt = document.createElement("option");
+          optPrompt.value = "";
+          optPrompt.textContent = "Selecione um vídeo recente da lista...";
+          dropdown.appendChild(optPrompt);
+
+          data.videos.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v.caminho;
+            opt.textContent = `${v.nome} (${v.tamanho_mb} MB) - [${v.pasta}]`;
+            dropdown.appendChild(opt);
+          });
+        } else {
+          dropdown.innerHTML = `<option value="">Nenhum vídeo local encontrado em gravacoes</option>`;
+        }
+      } catch (err) {
+        console.error("Erro ao listar vídeos:", err);
+      }
+    }
+
+    function selecionarVideoDoDropdown() {
+      const dropdown = document.getElementById("videoDropdown");
+      const path = dropdown.value;
+      if (path) {
+        carregarSnapshotsDoVideo(path);
+      }
+    }
+
+    function abrirDialogoArquivo() {
+      const customPath = prompt("Digite ou cole o caminho completo do arquivo de vídeo (.mp4, .mkv, .ts):");
+      if (customPath && customPath.trim()) {
+        carregarSnapshotsDoVideo(customPath.trim());
+      }
+    }
+
+    async function carregarSnapshotsDoVideo(videoPath) {
+      try {
+        sourceImage.style.opacity = "0.3";
+        const resp = await fetch("/api/studio/snapshots", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ video_path: videoPath, qtd_frames: 8 })
+        });
+        const data = await resp.json();
+
+        if (!data.success) {
+          alert("Não foi possível carregar os snapshots do vídeo.");
+          sourceImage.style.opacity = "1";
+          return;
+        }
+
+        state.videoPath = data.video_path;
+        state.videoNome = data.nome;
+        state.larguraOrig = data.largura;
+        state.alturaOrig = data.altura;
+        state.duracao = data.duracao;
+        state.snapshots = data.snapshots;
+
+        document.getElementById("videoDurationLabel").textContent = `Duração: ${data.duracao_hms} • ${data.largura}x${data.altura}`;
+
+        if (data.initial_crop) {
+          state.cam = data.initial_crop.cam;
+          state.display = data.initial_crop.display;
+          state.splitRatio = data.initial_crop.split_ratio || 0.38;
+        }
+
+        // Renderiza thumbnails
+        snapshotsList.innerHTML = "";
+        data.snapshots.forEach((snap, idx) => {
+          const thumb = document.createElement("div");
+          thumb.className = `snapshot-thumb ${idx === 0 ? "active" : ""}`;
+          thumb.innerHTML = `
+            <img src="${snap.url}" alt="Frame">
+            <span class="thumb-time">${snap.time_hms}</span>
+          `;
+          thumb.onclick = () => mudarSnapshotAtivo(idx);
+          snapshotsList.appendChild(thumb);
+        });
+
+        // Carrega o primeiro snapshot
+        mudarSnapshotAtivo(0);
+        aplicarPresetSplit(state.splitRatio);
+      } catch (err) {
+        console.error("Erro ao carregar snapshots:", err);
+      }
+    }
+
+    function mudarSnapshotAtivo(index) {
+      if (!state.snapshots[index]) return;
+      state.currentSnapshotIndex = index;
+      
+      const thumbs = snapshotsList.querySelectorAll(".snapshot-thumb");
+      thumbs.forEach((t, i) => t.classList.toggle("active", i === index));
+
+      const img = new Image();
+      img.onload = () => {
+        state.currentSnapshotImg = img;
+        sourceImage.src = img.src;
+        sourceImage.style.opacity = "1";
+        atualizarPosicoesDOM();
+        atualizarPreviewsVerticais();
+      };
+      img.src = state.snapshots[index].url;
+    }
+
+    // --- COORDENADAS E ATUALIZAÇÃO DO DOM ---
+    function atualizarPosicoesDOM() {
+      const rect = viewportWrap.getBoundingClientRect();
+      const scaleX = rect.width / state.larguraOrig;
+      const scaleY = rect.height / state.alturaOrig;
+
+      // Atualiza CAM box
+      camBox.style.left = `${state.cam.x * scaleX}px`;
+      camBox.style.top = `${state.cam.y * scaleY}px`;
+      camBox.style.width = `${state.cam.w * scaleX}px`;
+      camBox.style.height = `${state.cam.h * scaleY}px`;
+
+      // Atualiza DISPLAY box
+      displayBox.style.left = `${state.display.x * scaleX}px`;
+      displayBox.style.top = `${state.display.y * scaleY}px`;
+      displayBox.style.width = `${state.display.w * scaleX}px`;
+      displayBox.style.height = `${state.display.h * scaleY}px`;
+
+      // Atualiza labels de coordenadas
+      camCoords.textContent = `CAM: ${Math.round(state.cam.w)}x${Math.round(state.cam.h)} @ (${Math.round(state.cam.x)}, ${Math.round(state.cam.y)})`;
+      displayCoords.textContent = `DISPLAY: ${Math.round(state.display.w)}x${Math.round(state.display.h)} @ (${Math.round(state.display.x)}, ${Math.round(state.display.y)})`;
+    }
+
+    function atualizarPreviewsVerticais() {
+      if (!state.currentSnapshotImg) return;
+
+      const img = state.currentSnapshotImg;
+      
+      // 1. Renderiza CAM no topo
+      const camW = camCanvas.parentElement.clientWidth;
+      const camH = camCanvas.parentElement.clientHeight;
+      camCanvas.width = camW;
+      camCanvas.height = camH;
+      const ctxCam = camCanvas.getContext("2d");
+      ctxCam.clearRect(0, 0, camW, camH);
+
+      ctxCam.drawImage(
+        img,
+        state.cam.x, state.cam.y, state.cam.w, state.cam.h,
+        0, 0, camW, camH
+      );
+
+      // 2. Renderiza DISPLAY na base
+      const dispW = displayCanvas.parentElement.clientWidth;
+      const dispH = displayCanvas.parentElement.clientHeight;
+      displayCanvas.width = dispW;
+      displayCanvas.height = dispH;
+      const ctxDisp = displayCanvas.getContext("2d");
+      ctxDisp.clearRect(0, 0, dispW, dispH);
+
+      ctxDisp.drawImage(
+        img,
+        state.display.x, state.display.y, state.display.w, state.display.h,
+        0, 0, dispW, dispH
+      );
+    }
+
+    // --- INTERAÇÃO DE ARRASTAR E REDIMENSIONAR CAIXAS NO CANVAS 16:9 ---
+    function configurarInteracaoCanvas() {
+      viewportWrap.addEventListener("pointerdown", (e) => {
+        const handle = e.target.closest(".resize-handle");
+        const box = e.target.closest(".crop-box");
+
+        if (handle) {
+          e.preventDefault();
+          const targetBox = handle.closest(".crop-box");
+          state.isResizingBox = targetBox.classList.contains("cam-box") ? "cam" : "display";
+          state.resizeHandle = handle.dataset.handle;
+          state.dragStart = { x: e.clientX, y: e.clientY };
+          state.boxStart = { ...state[state.isResizingBox] };
+        } else if (box) {
+          e.preventDefault();
+          state.isDraggingBox = box.classList.contains("cam-box") ? "cam" : "display";
+          state.dragStart = { x: e.clientX, y: e.clientY };
+          state.boxStart = { ...state[state.isDraggingBox] };
+        }
+      });
+
+      window.addEventListener("pointermove", (e) => {
+        if (!state.isDraggingBox && !state.isResizingBox) return;
+
+        const rect = viewportWrap.getBoundingClientRect();
+        const scaleX = state.larguraOrig / rect.width;
+        const scaleY = state.alturaOrig / rect.height;
+
+        const dx = (e.clientX - state.dragStart.x) * scaleX;
+        const dy = (e.clientY - state.dragStart.y) * scaleY;
+
+        if (state.isDraggingBox) {
+          const target = state.isDraggingBox;
+          let newX = state.boxStart.x + dx;
+          let newY = state.boxStart.y + dy;
+
+          newX = Math.max(0, Math.min(state.larguraOrig - state[target].w, newX));
+          newY = Math.max(0, Math.min(state.alturaOrig - state[target].h, newY));
+
+          state[target].x = newX;
+          state[target].y = newY;
+          atualizarPosicoesDOM();
+          atualizarPreviewsVerticais();
+        } else if (state.isResizingBox) {
+          const target = state.isResizingBox;
+          const h = state.resizeHandle;
+          let { x, y, w, h: bh } = state.boxStart;
+
+          if (h.includes("r")) w += dx;
+          if (h.includes("l")) { x += dx; w -= dx; }
+          if (h.includes("b")) bh += dy;
+          if (h.includes("t")) { y += dy; bh -= dy; }
+
+          if (w < 80) w = 80;
+          if (bh < 80) bh = 80;
+
+          x = Math.max(0, Math.min(state.larguraOrig - w, x));
+          y = Math.max(0, Math.min(state.alturaOrig - bh, y));
+
+          state[target] = { x, y, w, h: bh };
+          atualizarPosicoesDOM();
+          atualizarPreviewsVerticais();
+        }
+      });
+
+      window.addEventListener("pointerup", () => {
+        state.isDraggingBox = null;
+        state.isResizingBox = null;
+      });
+
+      window.addEventListener("resize", () => {
+        atualizarPosicoesDOM();
+        atualizarPreviewsVerticais();
+      });
+    }
+
+    // --- INTERAÇÃO DO DIVIDER VERTICAL DE SPLIT (UP / DOWN) ---
+    function configurarInteracaoSplitDivider() {
+      splitDivider.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        state.isDraggingSplit = true;
+      });
+
+      window.addEventListener("pointermove", (e) => {
+        if (!state.isDraggingSplit) return;
+
+        const phoneRect = document.getElementById("phoneContainer").getBoundingClientRect();
+        const relY = e.clientY - phoneRect.top;
+        let pct = relY / phoneRect.height;
+        pct = Math.max(0.20, Math.min(0.60, pct)); // Limite seguro entre 20% e 60%
+
+        aplicarPresetSplit(pct);
+      });
+
+      window.addEventListener("pointerup", () => {
+        state.isDraggingSplit = false;
+      });
+    }
+
+    function aplicarPresetSplit(ratio) {
+      state.splitRatio = ratio;
+      const camPct = Math.round(ratio * 100);
+      const dispPct = 100 - camPct;
+
+      phoneCamPart.style.height = `${camPct}%`;
+      phoneDisplayPart.style.height = `${dispPct}%`;
+      splitDivider.style.top = `${camPct}%`;
+
+      camSplitPct.textContent = `📷 Webcam: ${camPct}%`;
+      displaySplitPct.textContent = `🎮 Jogo: ${dispPct}%`;
+
+      atualizarPreviewsVerticais();
+    }
+
+    function resetarCaixasAuto() {
+      if (state.videoPath) {
+        carregarSnapshotsDoVideo(state.videoPath);
+      }
+    }
+
+    function alternarTravaProporcao() {
+      state.lockAspect = !state.lockAspect;
+      const btn = document.getElementById("lockAspectBtn");
+      btn.innerHTML = state.lockAspect ? `<span>🔒</span><span>Travado 16:9</span>` : `<span>🔓</span><span>Livre</span>`;
+    }
+
+    // --- DISPARAR RENDERIZAÇÃO VIRAL ---
+    async function dispararRenderStudio() {
+      if (!state.videoPath) {
+        alert("Selecione um vídeo primeiro.");
+        return;
+      }
+
+      const btn = document.getElementById("btnIniciarRender");
+      const banner = document.getElementById("progressBanner");
+      const progressText = document.getElementById("progressText");
+
+      btn.disabled = true;
+      btn.style.opacity = "0.6";
+      banner.style.display = "block";
+      progressText.textContent = "Inicializando GPU AMF e gerando cortes com o enquadramento customizado...";
+
+      const payload = {
+        video_path: state.videoPath,
+        custom_crop: {
+          cam: { ...state.cam },
+          display: { ...state.display },
+          split_ratio: state.splitRatio
+        },
+        qtd_cortes: parseInt(document.getElementById("cfgQtdCortes").value) || 10,
+        dur_corte: parseFloat(document.getElementById("cfgDurCorte").value) || 40.0,
+        target_res: document.getElementById("cfgTargetRes").value,
+        gerar_legendas: document.getElementById("chkLegendas").checked,
+        usar_ducking: document.getElementById("chkDucking").checked,
+        whisper_model: document.getElementById("cfgWhisperModel") ? document.getElementById("cfgWhisperModel").value : "medium"
+      };
+
+      try {
+        const resp = await fetch("/api/studio/render", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const res = await resp.json();
+
+        if (res.sucesso) {
+          progressText.innerHTML = `✅ <strong>Renderização iniciada com sucesso!</strong> Acompanhe no Monitoramento LIVE ou no painel de downloads.`;
+          setTimeout(() => {
+            window.location.href = "/";
+          }, 2000);
+        } else {
+          progressText.textContent = "Erro ao iniciar renderização: " + (res.erro || "Verifique o log");
+          btn.disabled = false;
+          btn.style.opacity = "1";
+        }
+      } catch (err) {
+        progressText.textContent = "Erro de conexão: " + err.message;
+        btn.disabled = false;
+        btn.style.opacity = "1";
+      }
+    }
+
+    function abrirConfiguracoes() {
+      window.location.href = "/";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoramento LIVE — Twitch & Kick Pro 2.0</title>
+  <link rel="stylesheet" href="/static/css/fluent-twitch.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Top App Bar (Microsoft Fluent + Twitch/Kick) -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo" title="Monitoramento LIVE Pro">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 3h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-4.586l-2.707 2.707A1 1 0 0 1 11 20H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm1 2v10h6.414l1 1H19V5H5zm3 3h2v4H8V8zm6 0h2v4h-2V8z"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          <span>MONITORAMENTO LIVE</span>
+          <span class="live-badge">
+            <span class="live-dot"></span> AO VIVO
+          </span>
+        </div>
+        <div style="display: flex; gap: 6px; margin-left: 12px;">
+          <a href="/" class="platform-btn active" style="text-decoration: none; font-size: 0.78rem;">📡 Monitor</a>
+          <a href="/studio" class="platform-btn" style="text-decoration: none; font-size: 0.78rem; color: #c084fc; border-color: rgba(168,85,247,0.4);" title="Abrir Studio de Enquadramento e Crop Customizado">📐 Studio Cortes IA</a>
+        </div>
+      </div>
+
+      <!-- Seletor de Plataforma -->
+      <div class="platform-switch">
+        <button class="platform-btn active" data-platform="twitch">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+          Twitch
+        </button>
+        <button class="platform-btn" data-platform="kick">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M1.333 0h6.666v6.667h3.334v3.333h3.334V6.667h3.333V3.333h3.333V0H24v10h-3.333v3.333H18v3.334h3.333V20H24v4h-6.667v-3.333h-3.333v-3.334H11.33v3.334H8V24H1.333z"/></svg>
+          Kick
+        </button>
+      </div>
+
+      <!-- Campo de Pesquisa Rápida -->
+      <div class="header-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" placeholder="Pesquisar jogos, categorias ou streamers..." autocomplete="off" />
+        <div id="search-dropdown" class="search-dropdown"></div>
+      </div>
+
+      <!-- Ações do Topo -->
+      <div class="header-actions">
+        <!-- Indicador Bypass 18+ -->
+        <div id="bypass-pill" class="bypass-pill" title="Desbloqueio automático de clipes com aviso de conteúdo sensível / +18">
+          <span>🔓</span>
+          <span>Bypass +18 Ativo</span>
+        </div>
+
+        <!-- Botão Abrir Downloads -->
+        <button id="btn-open-downloads" class="btn-icon" title="Fila de Downloads e Cortes">
+          📥
+          <span id="downloads-badge" class="badge-counter" style="display: none;">0</span>
+        </button>
+
+        <!-- Botão Abrir Configurações -->
+        <button id="btn-open-settings" class="btn-icon" title="Configurações & Credenciais">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <!-- Shelf de Jogos Expandido (Carrossel com mais capas como na Twitch) -->
+    <section class="games-shelf-section">
+      <div class="section-title-row">
+        <div class="section-title">
+          <span>🎮</span> Catálogo de Jogos em Destaque & Mais Assistidos
+        </div>
+        <button id="btn-load-top-games" class="btn-secondary" style="font-size: 11px; padding: 4px 10px;" title="Atualiza o catálogo com os jogos mais assistidos do mundo em tempo real">
+          🔄 Atualizar Mais Populares
+        </button>
+      </div>
+      <div id="games-shelf" class="games-scroll-container">
+        <!-- Preenchido via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Banner do Jogo Selecionado -->
+    <section class="active-game-banner">
+      <div class="banner-left">
+        <img id="active-game-thumb" class="banner-thumb" src="https://static-cdn.jtvnw.net/ttv-boxart/1867279146_IGDB-285x380.jpg" alt="" />
+        <div class="banner-details">
+          <h1 id="active-game-title" class="banner-title">Grand Theft Auto VI</h1>
+          <div class="banner-stats">
+            <span id="active-game-viewers-tag">🔥 Mais de 1.7 mi espectadores acompanhando</span>
+            <span>•</span>
+            <span id="platform-indicator" style="color: var(--accent-active); font-weight: 700;">TWITCH</span>
+          </div>
+          <div id="active-game-tags" class="banner-tags">
+            <span class="banner-tag">Ação</span>
+            <span class="banner-tag">Mundo Aberto</span>
+            <span class="banner-tag">FPS</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abas de Navegação (Clipes & Cortes vs Vídeos VODs vs Lives ao Vivo) -->
+    <div class="content-tabs-bar">
+      <button class="content-tab active" data-tab="clips" title="Visualizar e ranquear os maiores clipes e cortes virais">
+        <span>✂️</span> Clipes & Cortes Populares
+      </button>
+      <button class="content-tab" data-tab="videos" title="Visualizar os vídeos e VODs completos mais assistidos da história do jogo">
+        <span>📹</span> Vídeos & VODs Completos
+      </button>
+      <button class="content-tab" data-tab="lives" title="Assistir streamers transmitindo ao vivo agora">
+        <span>🔴</span> Canais Ao Vivo
+      </button>
+    </div>
+
+    <!-- Barra de Filtros e Idiomas -->
+    <div class="filter-toolbar">
+      <div class="filter-group-left">
+        <!-- Idioma Padrão: Português (Brasil) -->
+        <select id="lang-select" class="select-control" title="Filtrar por idioma (Padrão: Português do Brasil)">
+          <option value="PT" selected>🇧🇷 Português (Brasil)</option>
+          <option value="ALL">🌐 Todos os Idiomas</option>
+          <option value="EN">🇺🇸 English</option>
+          <option value="ES">🇪🇸 Español</option>
+        </select>
+
+        <!-- Período / Range (visível para Clipes) -->
+        <div id="period-pills-wrap" class="period-pills">
+          <button class="period-pill" data-period="LAST_DAY">24 Horas</button>
+          <button class="period-pill active" data-period="LAST_WEEK">7 Dias</button>
+          <button class="period-pill" data-period="LAST_MONTH">30 Dias</button>
+          <button class="period-pill" data-period="ALL_TIME">Todo o Período</button>
+        </div>
+
+        <!-- Ordenação -->
+        <select id="sort-select" class="select-control">
+          <option value="VIEWS_DESC" selected>🔥 Mais Visualizados (Ranking)</option>
+          <option value="TRENDING">⚡ Em Alta (Trending)</option>
+        </select>
+      </div>
+
+      <div class="filter-group-right">
+        <!-- Botão Seleção em Lote -->
+        <button id="btn-batch-toggle" class="btn-secondary" title="Ativa checkboxes para baixar múltiplos vídeos simultaneamente">
+          <span>☑️</span> Seleção em Lote
+        </button>
+        <button id="btn-refresh-content" class="btn-secondary" title="Recarregar conteúdo">
+          <span>🔄</span> Atualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Container Principal de Cards -->
+    <main class="content-container">
+      <div id="content-grid" class="cards-grid">
+        <!-- Preenchido dinamicamente com Clipes ou Lives -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Barra Flutuante de Download em Lote (Sticky) -->
+  <div id="batch-floating-bar" class="batch-floating-bar">
+    <div class="batch-count-text">
+      <span>☑️</span>
+      <span><strong id="batch-count-num">0</strong> clipes selecionados</span>
+    </div>
+    <button id="btn-batch-download" class="btn-primary">
+      <span>⬇️</span> Baixar Selecionados
+    </button>
+    <button id="btn-batch-clear" class="btn-secondary">
+      Desmarcar
+    </button>
+  </div>
+
+  <!-- Modal de Confirmação: Deseja Fazer Cortes do Vídeo com IA? -->
+  <div id="cuts-confirm-modal" class="cuts-confirm-modal">
+    <div class="cuts-confirm-dialog" style="max-width: 680px;">
+      <div class="cuts-confirm-title">
+        <span>✂️</span>
+        <span>Configurar Mineração e Cortes IA Pro</span>
+      </div>
+
+      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.5; margin-bottom: 12px;">
+        Escolha como deseja processar este conteúdo: <strong>baixar o original</strong>, minerar <strong>cortes virais com IA em 2K</strong>, ou ajustar manualmente o enquadramento no <strong>Studio Interativo</strong>.
+      </p>
+
+      <!-- Opções Avançadas de Mineração Solicitadas pelo Usuário -->
+      <div class="cuts-options-box" style="margin-bottom: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px;">
+        <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+          <span>⚡</span> Escolha o Modo de Processamento:
+        </div>
+        
+        <label class="miner-radio-label" style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer; margin-bottom: 8px; padding: 10px; border-radius: var(--radius-xs); background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.35);">
+          <input type="radio" name="miner-mode" value="por_hora" checked style="accent-color: #a855f7; margin-top: 3px;" />
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #fff;">
+              ⏱️ Mineração por Hora (10 Cortes por Hora de Vídeo)
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-top: 3px;">
+              Ideal para VODs e Lives longas (ex: vídeo de 10h gera 100 cortes). <strong style="color: #34d399;">Cada hora é liberada imediatamente na pasta</strong> com botão para assistir e abrir assim que a primeira hora termina!
+            </div>
+          </div>
+        </label>
+
+        <label class="miner-radio-label" style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer; padding: 10px; border-radius: var(--radius-xs); background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle);">
+          <input type="radio" name="miner-mode" value="top_geral" style="accent-color: #a855f7; margin-top: 3px;" />
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #fff;">
+              ⭐ Top Melhores Momentos Globais (5 a 10 Cortes)
+            </div>
+            <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-top: 3px;">
+              Varre o vídeo completo e extrai somente os picos absolutos de viralidade.
+            </div>
+          </div>
+        </label>
+
+        <!-- Seletor Visual de Layout com Cards e Mini-Phones -->
+        <div style="margin-top: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="font-size: 11.5px; color: var(--text-secondary); font-weight: 700; display: flex; align-items: center; gap: 5px;">
+              <span>📐</span> Selecione o Layout Visual Vertical 9:16:
+            </label>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 11px; color: var(--text-muted);">Cortes/Hora:</span>
+              <select id="select-cuts-per-hour" class="form-select" style="font-size: 11px; padding: 3px 6px; background: #18181f; border: 1px solid rgba(255,255,255,0.18); color: #fff; border-radius: 4px;">
+                <option value="10" selected>10 cortes / hora</option>
+                <option value="5">5 cortes / hora</option>
+                <option value="15">15 cortes / hora</option>
+                <option value="20">20 cortes / hora</option>
+                <option value="25">25 cortes / hora</option>
+                <option value="30">30 cortes / hora</option>
+              </select>
+            </div>
+          </div>
+
+          <input type="hidden" id="select-cuts-layout" value="SPLIT_PRO" />
+
+          <div class="layout-preview-grid">
+            <!-- 1. Split Screen Pro -->
+            <div class="layout-card active" data-layout="SPLIT_PRO" onclick="selecionarLayoutCard('SPLIT_PRO')">
+              <div class="mini-phone">
+                <div class="mini-cam">📹 WEBCAM</div>
+                <div class="mini-game">🎮 JOGO
+                  <div class="mini-subs">LEGENDA</div>
+                </div>
+              </div>
+              <div class="layout-card-label">Split Screen Pro</div>
+              <div class="layout-card-sub">Webcam + Neon + Jogo</div>
+            </div>
+
+            <!-- 2. Dual Focus Viral -->
+            <div class="layout-card" data-layout="DUAL_FOCUS" onclick="selecionarLayoutCard('DUAL_FOCUS')">
+              <div class="mini-phone">
+                <div class="mini-top-full">16:9 GERAL</div>
+                <div class="mini-bottom-zoom">🔍 ZOOM AÇÃO
+                  <div class="mini-subs">LEGENDA</div>
+                </div>
+              </div>
+              <div class="layout-card-label">Dual Focus Viral</div>
+              <div class="layout-card-sub">Gameplay 16:9 + Zoom Base</div>
+            </div>
+
+            <!-- 3. Fundo Desfocado -->
+            <div class="layout-card" data-layout="BLUR_BACKGROUND" onclick="selecionarLayoutCard('BLUR_BACKGROUND')">
+              <div class="mini-phone blur-bg">
+                <div class="mini-center-169">16:9 CENTRO</div>
+                <div class="mini-subs" style="bottom: 8px;">LEGENDA</div>
+              </div>
+              <div class="layout-card-label">Fundo Blur</div>
+              <div class="layout-card-sub">16:9 Central + Blur Dinâmico</div>
+            </div>
+
+            <!-- 4. Tela Cheia 9:16 -->
+            <div class="layout-card" data-layout="FULL_916" onclick="selecionarLayoutCard('FULL_916')">
+              <div class="mini-phone full-bg">
+                <div class="mini-badge-zoom">PUNCH-IN</div>
+                <span>9:16 CHEIO</span>
+                <div class="mini-subs">LEGENDA</div>
+              </div>
+              <div class="layout-card-label">Tela Cheia 9:16</div>
+              <div class="layout-card-sub">Crop Dinâmico + Micro-Zoom</div>
+            </div>
+
+            <!-- 5. Studio de Crop Interativo -->
+            <div class="layout-card" data-layout="CUSTOM_SPLIT" onclick="selecionarLayoutCard('CUSTOM_SPLIT')">
+              <div class="mini-phone studio-bg">
+                <div class="mini-box-cam">CAM 🔲</div>
+                <div class="mini-handle">••••</div>
+                <div class="mini-box-disp">GAME 🔲</div>
+                <div class="mini-subs">MANUAL</div>
+              </div>
+              <div class="layout-card-label">Studio Crop</div>
+              <div class="layout-card-sub">Ajuste Manual Interativo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="folder-tree-box" style="margin-bottom: 12px;">
+        <strong style="color: #fff;">📁 Organização Automática por Plataforma e Streamer:</strong><br>
+        gravacoes/<br>
+        └── 📂 <span id="confirm-platform-name" style="color: #a855f7;">[Plataforma: Twitch ou Kick]</span>/<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;└── 📁 <span id="confirm-streamer-name" style="color: #38bdf8;">[Nome_do_Streamer]</span>/<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 🎥 <strong>original_[Streamer]_[Titulo].mp4</strong> <span style="color: #64748b;">(Vídeo original)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 📂 <strong>Hora_01/</strong> <span style="color: #34d399;">(10 cortes liberados na 1ª hora!)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 📄 <strong>corte_01_....txt + .bat</strong> <span style="color: #fbbf24;">(Legendas, ganchos e editor)</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="check-remember-cuts" style="accent-color: var(--accent-active); cursor: pointer;" />
+        <label for="check-remember-cuts" style="font-size: 12px; color: var(--text-secondary); cursor: pointer;">Lembrar modo nas próximas minerações</label>
+      </div>
+
+      <!-- Três Ações Principais: Original, Studio Interativo ou Mineração Automática -->
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
+        <button id="btn-confirm-no-cuts" class="btn-secondary" style="padding: 8px 14px; font-size: 12px;" title="Baixar apenas o arquivo MP4 original sem processar cortes">
+          ⬇️ Apenas Baixar Original
+        </button>
+        <button id="btn-confirm-studio" class="btn-secondary" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; font-weight: 700; padding: 8px 14px; font-size: 12px;" title="Baixar e abrir direto no Studio para você posicionar a câmera e o jogo">
+          📐 Baixar e Abrir no Studio
+        </button>
+        <button id="btn-confirm-yes-cuts" class="btn-primary" style="background: linear-gradient(135deg, #a855f7, #6366f1); font-weight: 700; padding: 8px 16px; font-size: 12px;" title="A IA analisa picos de voz e enquadra tudo automaticamente">
+          🤖 Mineração Automática por IA
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal do Player de Vídeo Theater (Lives ao Vivo e Clipes Sem Censura) -->
+  <div id="player-modal" class="player-modal">
+    <div class="player-dialog">
+      <div class="player-header">
+        <div class="player-title-info">
+          <span id="player-type-icon" style="font-size: 18px;">🎬</span>
+          <div>
+            <div id="player-title" class="player-title">Título do Vídeo</div>
+            <div id="player-streamer" style="font-size: 12px; color: var(--text-secondary);">Streamer</div>
+          </div>
+        </div>
+        <button id="player-close-btn" class="player-close-btn">✕</button>
+      </div>
+
+      <div class="video-container">
+        <div id="player-spinner" class="video-loading-spinner">
+          <div class="spinner"></div>
+          <div id="player-spinner-text" style="font-size: 13px; color: var(--text-secondary);">Resolvendo transmissão direta...</div>
+        </div>
+        <video id="player-video" controls playsinline></video>
+        <iframe id="player-iframe" style="display: none;" allowfullscreen></iframe>
+      </div>
+
+      <div class="player-footer">
+        <div class="player-meta-left" style="display: flex; align-items: center; gap: 10px;">
+          <span id="player-tag-status" class="uncensored-tag" style="position: static;">🔓 Sem Restrições / +18 Liberado</span>
+          <button id="player-switch-mode-btn" class="btn-card-action" style="padding: 5px 11px; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-xs); cursor: pointer;" title="Alterna entre Player Nativo e Player Oficial Embed">
+            <span>🔄</span> Alternar Modo (Nativo / Embed)
+          </button>
+        </div>
+        <div class="player-footer-actions">
+          <button id="player-download-btn" class="btn-primary">
+            <span>⬇️</span> Baixar Vídeo (MP4)
+          </button>
+          <button id="player-miner-btn" class="btn-card-action btn-miner" style="padding: 7px 14px; font-size: 13px;">
+            <span>✂️</span> Baixar e Gerar Cortes IA
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer Lateral de Downloads -->
+  <div id="downloads-drawer" class="downloads-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <span>📥</span> Downloads & Cortes IA
+      </div>
+      <button id="btn-close-drawer" class="player-close-btn">✕</button>
+    </div>
+    <div id="drawer-downloads-list" class="drawer-content">
+      <!-- Tarefas ativas e concluídas -->
+    </div>
+  </div>
+
+  <!-- Modal de Configurações & Credenciais -->
+  <div id="settings-modal" class="settings-modal">
+    <div class="settings-dialog">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+        <h3 style="font-size: 17px; font-weight: 700;">⚙️ Configurações da Plataforma</h3>
+        <button id="btn-close-settings" class="player-close-btn">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Pasta Base dos Downloads:</label>
+        <input type="text" id="setting-download-dir" class="form-input" />
+        <span class="form-help">Os vídeos serão organizados automaticamente em subpastas por Categoria do Jogo.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Cookie / Auth Token da Twitch (Opcional):</label>
+        <input type="password" id="setting-twitch-token" class="form-input" placeholder="auth-token da Twitch (opcional)" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Token Kick (Opcional):</label>
+        <input type="password" id="setting-kick-token" class="form-input" placeholder="Bearer Token opcional" />
+      </div>
+
+      <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 6px;">
+        <div>
+          <label class="form-label">Bypass Automático de Censura / +18:</label>
+          <div class="form-help">Elimina avisos de conteúdo sensível e confirmações</div>
+        </div>
+        <input type="checkbox" id="setting-bypass-18" style="width: 20px; height: 20px; accent-color: var(--accent-active); cursor: pointer;" checked />
+      </div>
+
+      <div class="form-group" style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 6px;">
+        <div>
+          <label class="form-label">Gerar Cortes Automáticos por Padrão:</label>
+          <div class="form-help">Se ativado, não pergunta ao baixar e sempre gera os cortes virais</div>
+        </div>
+        <input type="checkbox" id="setting-auto-cortes" style="width: 20px; height: 20px; accent-color: var(--accent-active); cursor: pointer;" />
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+        <button onclick="closeSettingsModal()" class="btn-secondary">Cancelar</button>
+        <button id="btn-save-settings" class="btn-primary">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Container de Toasts -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Hls.js para reprodução nativa de streams e VODs sem censura -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- Script da Aplicação -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
